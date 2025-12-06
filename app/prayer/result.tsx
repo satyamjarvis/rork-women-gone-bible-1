@@ -758,26 +758,35 @@ CRITICAL: For the scripture verses, you MUST provide the EXACT, WORD-FOR-WORD te
       
       console.log('Downloading prayer card for prayer:', generatedPrayer.id);
       
-
-      
-      console.log('Image loading status:', { 
-        logoLoaded, 
-        backgroundLoaded, 
-        logoBase64Length: logoBase64?.length,
-        backgroundBase64Length: backgroundBase64?.length 
-      });
       if (Platform.OS === 'web') {
+        console.log('[Web] Image loading status:', { 
+          logoBase64Length: logoBase64?.length,
+          backgroundBase64Length: backgroundBase64?.length 
+        });
+        
         if (!logoBase64 || !backgroundBase64) {
-          console.error('[Web] Images not loaded, waiting...');
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          if (!logoBase64 || !backgroundBase64) {
-            console.error('[Web] Images still not loaded after waiting');
-            throw new Error('Images failed to load. Please try again.');
+          console.log('[Web] Images not loaded yet, waiting up to 5 seconds...');
+          
+          const maxWaitTime = 5000;
+          const checkInterval = 200;
+          let elapsedTime = 0;
+          
+          while ((!logoBase64 || !backgroundBase64) && elapsedTime < maxWaitTime) {
+            await new Promise((resolve) => setTimeout(resolve, checkInterval));
+            elapsedTime += checkInterval;
+            console.log('[Web] Waiting for images...', elapsedTime + 'ms');
           }
+          
+          if (!logoBase64 || !backgroundBase64) {
+            console.error('[Web] Images still not loaded after', maxWaitTime + 'ms');
+            throw new Error('Images failed to load. Please close and reopen the prayer card, then try again.');
+          }
+          
+          console.log('[Web] Images loaded successfully after', elapsedTime + 'ms');
         }
       } else {
         if (!logoLoaded || !backgroundLoaded) {
-          console.log('Waiting for images to load on mobile...');
+          console.log('[Mobile] Waiting for images to load...');
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       }
